@@ -59,6 +59,10 @@ dkms.conf
 ~*
 *.e
 
+# Zig
+/zig-out
+/zig-cache
+
 # autotools
 /aclocal.m4
 /autom4te.cache/
