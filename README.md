@@ -1,3 +1,7 @@
+# Fork Details
+This adds the boilerplate to build using Zig as the build toolchain and ultimately 
+as a module dependency.
+
 # MD4C Readme
 
 * Home: http://github.com/mity/md4c
