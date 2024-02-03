@@ -5,18 +5,14 @@ import re
 import argparse
 import sys
 import platform
-from cmark import CMark
+from prog import Prog
 from timeit import default_timer as timer
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run cmark tests.')
+    parser = argparse.ArgumentParser(description='Run Markdown tests.')
     parser.add_argument('-p', '--program', dest='program', nargs='?', default=None,
             help='program to test')
-    parser.add_argument('--library-dir', dest='library_dir', nargs='?',
-            default=None, help='directory containing dynamic library')
     args = parser.parse_args(sys.argv[1:])
-
-cmark = CMark(prog=args.program, library_dir=args.library_dir)
 
 # list of pairs consisting of input and a regex that must match the output.
 pathological = {
@@ -95,7 +91,18 @@ pathological = {
             re.compile("<ul>\r?\n(<li><ul>\r?\n){49999}<li>a</li>\r?\n</ul>\r?\n(</li>\r?\n</ul>\r?\n){49999}")),
     "nested invalid link references":
             (("[" * 50000 + "]" * 50000 + "\n\n[a]: /b"),
-            re.compile("\[{50000}\]{50000}"))
+            re.compile("\[{50000}\]{50000}")),
+    "many broken permissive autolinks":
+            (("www._" * 50000 + "x"),
+            re.compile("<p>(www._){50000}x</p>"),
+            "--fpermissive-www-autolinks"),
+    "huge table":
+            (("th|" * 10000 + "\n" + "-|" * 10000 + "\n" + "td\n" * 10000),
+            re.compile(""),
+            "--ftables"),
+    "many broken links":
+            (("]([\n" * 50000),
+            re.compile("<p>(\]\(\[\r?\n){49999}\]\(\[</p>"))
 }
 
 whitespace_re = re.compile('/s+/')
@@ -105,13 +112,19 @@ failed = 0
 
 #print("Testing pathological cases:")
 for description in pathological:
-    (inp, regex) = pathological[description]
+    if len(pathological[description]) == 2:
+        (inp, regex) = pathological[description]
+        prog = Prog(cmdline=args.program)
+    else:
+        (inp, regex, default_options) = pathological[description]
+        prog = Prog(cmdline=args.program, default_options=default_options)
+
     start = timer()
-    [rc, actual, err] = cmark.to_html(inp)
+    [rc, actual, err] = prog.to_html(inp)
     end = timer()
     if rc != 0:
         errored += 1
-        print('{:35} [ERRORED (return code %d)]'.format(description, rc))
+        print('{:35} [ERRORED (exit code {})]'.format(description, rc))
         print(err)
     elif regex.search(actual):
         print('{:35} [PASSED] {:.3f} secs'.format(description, end-start))

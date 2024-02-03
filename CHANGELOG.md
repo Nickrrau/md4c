@@ -4,6 +4,104 @@
 
 ## Next Version (Work in Progress)
 
+Fixes:
+
+ - [#236](https://github.com/mity/md4c/issues/236):
+   Fix quadratic time behavior caused by one-by-one walking over block lines
+   instead of calling `md_lookup_line()`.
+
+
+## Version 0.5.2
+
+Changes:
+
+ * Changes mandated by CommonMark specification 0.31:
+
+   - The specification expands set of Unicode characters seen by Markdown
+     parser as a punctuation. Namely all Unicode general categories P
+     (punctuation) and S (symbols) are now seen as such.
+
+   - The definition of HTML comment has been changed so that `<!-->` and
+     `<!--->` are also recognized as HTML comments.
+
+   - HTML tags recognized as HTML block starting condition of type 4 has been
+     updated, namely a tag `<source>` has been removed, whereas `<search>`
+     added.
+
+   Refer to [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) for full
+   specification.
+
+Fixes:
+
+ - [#230](https://github.com/mity/md4c/issues/230):
+   The fix [#223](https://github.com/mity/md4c/issues/223) in 0.5.1 release
+   was incomplete and one corner case remained unfixed. This is now addressed.
+
+ - [#231](https://github.com/mity/md4c/issues/231):
+   `md2html --full-html` now emits `<meta  charset="UTF-8">` in the HTML header.
+
+
+## Version 0.5.1
+
+Changes:
+
+ * LaTeX math extension (`MD_FLAG_LATEXMATHSPANS`) now requires that opener
+   mark is not immediately preceded with alpha-numeric character and similarly
+   that closer mark is not immediately followed with alpha-numeric character.
+
+   So for example `foo$ x + y = z $` is not recognized as LaTeX equation
+   anymore because there is no space between `foo` and the opening `$`.
+
+ * Table extension (`MD_FLAG_TABLES`) now recognizes only tables with no more
+   than 128 columns. This limit has been imposed to prevent a pathological
+   case of quadratic output size explosion which could be used as DoS attack
+   vector.
+
+ * We are now more strict with `MD_FLAG_PERMISSIVExxxAUTOLINKS` family of
+   extensions with respect to non-alphanumeric characters, with the aim to
+   mitigate false positive detections.
+
+   Only relatively few selected non-alphanumeric are now allowed in permissive
+   e-mail auto-links (`MD_FLAG_PERMISSIVEEMAILAUTOLINKS`):
+     - `.`, `-`, `_`, `+` in user name part of e-mail address; and
+     - `.`, `-`, `_` in host part of the e-mail address.
+
+   Similarly for URL and e-mail auto-links (`MD_FLAG_PERMISSIVEURLAUTOLINKS` and
+   `MD_FLAG_PERMISSIVEWWWAUTOLINKS`):
+     - `.`, `-`, `_` in host part of the URL;
+     - `/`, `.`, `-`, `_` in path part of the URL;
+     - `&`, `.`, `-`, `+`, `_`, `=`, `(`, `)` in the query part of the URL
+       (additionally, if present, `(` and `)` must form balanced pairs); and
+     - `.`, `-`, `+`, `_` in the fragment part of the URL.
+
+   Furthermore these characters (with some exceptions like where they serve as
+   delimiter characters, e.g. `/` for paths) are generally accepted only when
+   an alphanumeric character both precedes and follows them (i.e. these cannot
+   be "stacked" together).
+
+Fixes:
+
+ * Fix several bugs where we haven't properly respected already resolved spans
+   of higher precedence level in handling of permissive auto-links extensions
+   (family of `MD_FLAG_PERMISSIVExxxAUTOLINKS` flags), LaTeX math extension
+   (`MD_FLAG_LATEXMATHSPANS`) and wiki-links extension (`MD_FLAG_WIKILINKS`)
+   of the form `[[label|text]]` (with pipe `|`). In some complex cases this
+   could lead to invalid internal parser state and memory corruption.
+
+   Identified with [OSS-Fuzz](https://github.com/google/oss-fuzz).
+
+ * [#222](https://github.com/mity/md4c/issues/222):
+   Fix strike-through extension (`MD_FLAG_STRIKETHROUGH`) which did not respect
+   same rules for pairing opener and closer marks as other emphasis spans.
+
+ * [#223](https://github.com/mity/md4c/issues/223):
+   Fix incorrect handling of new-line character just at the beginning and/or
+   end of a code span where we were not following CommonMark specification
+   requirements correctly.
+
+
+## Version 0.5.0
+
 Changes:
 
  * Changes mandated by CommonMark specification 0.30.
@@ -15,14 +113,34 @@ Changes:
 
    - HTML declaration (HTML block type 4) is not required to begin with an
      upper-case ASCII character after the `<!`. Any ASCII character is now
-     allowed.
+     allowed. Also it now doesn't require a whitespace before the closing `>`.
 
    Other than that, the newest specification mainly improves test coverage and
    clarifies its wording in some cases, without affecting the implementation.
 
-   Refer to [CommonMark
-   0.30 notes](https://github.com/commonmark/commonmark-spec/releases/tag/0.30)
-   for more info.
+   Refer to [CommonMark 0.30](https://spec.commonmark.org/0.30/) for full
+   specification.
+
+ * Make Unicode-specific code compliant to Unicode 15.1.
+
+ * Update list of entities known to the HTML renderer from
+   https://html.spec.whatwg.org/entities.json.
+
+New Features:
+
+ * Add extension allowing to treat all soft break as hard ones. It has to be
+   explicitly enabled with `MD_FLAG_HARD_SOFT_BREAKS`.
+
+   Contributed by [l-m](https://github.com/l1mey112).
+
+ * Structure `MD_SPAN_A_DETAIL` now has a new member `is_autolink`.
+
+   Contributed by [Jens Alfke](https://github.com/snej).
+
+ * `md2html` utility now supports command line options `--html-title` and
+   `--html-css`.
+
+   Contributed by [Andreas Baumann](https://github.com/andreasbaumann).
 
 Fixes:
 
@@ -50,9 +168,40 @@ Fixes:
    definition even if the potential label contains nested brackets.
 
  * [#173](https://github.com/mity/md4c/issues/173),
-   [#174](https://github.com/mity/md4c/issues/174):
+   [#174](https://github.com/mity/md4c/issues/174),
+   [#212](https://github.com/mity/md4c/issues/212),
+   [#213](https://github.com/mity/md4c/issues/213):
    Multiple bugs identified with [OSS-Fuzz](https://github.com/google/oss-fuzz)
    were fixed.
+
+ * [#190](https://github.com/mity/md4c/issues/190),
+   [#200](https://github.com/mity/md4c/issues/200),
+   [#201](https://github.com/mity/md4c/issues/201):
+   Multiple fixes of incorrect interactions of indented code block with a
+   preceding block.
+
+ * [#202](https://github.com/mity/md4c/issues/202):
+   We were not correctly calling `enter_block()` and `leave_block()` callbacks
+   if multiple HTML blocks followed one after another; instead previously
+   such blocks were merged into one.
+
+   (This may likely impact only applications interested in Markdown's AST,
+   and not just converting Markdown to other formats like HTML.)
+
+ * [#210](https://github.com/mity/md4c/issues/210):
+   The `md2html` utility now handles nested images with optional titles
+   correctly.
+
+ * [#214](https://github.com/mity/md4c/issues/214):
+   Tags `<h2>` ... `<h6>` incorrectly did not trigger HTML block.
+
+ * [#215](https://github.com/mity/md4c/issues/215):
+   The parser incorrectly did not accept optional tabs after setext header
+   underline.
+
+ * [#217](https://github.com/mity/md4c/issues/217):
+   The parser incorrectly resolved emphasis in some situations, if the emphasis
+   marks were enclosed by punctuation characters.
 
 
 ## Version 0.4.8
@@ -64,7 +213,7 @@ Fixes:
    the block) could eat 1 line of actual contents.
 
  * [#150](https://github.com/mity/md4c/issues/150):
-   Fix md2html utility to output proper DOCTYPE and HTML tags when `--full-html`
+   Fix `md2html` to output proper DOCTYPE and HTML tags when `--full-html`
    command line options is used, accordingly to the expected output format
    (HTML or XHTML).
 

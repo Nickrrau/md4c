@@ -1,7 +1,3 @@
-# Fork Details
-This adds the boilerplate to build using Zig as the build toolchain and ultimately 
-as a module dependency.
-
 # MD4C Readme
 
 * Home: http://github.com/mity/md4c
@@ -26,7 +22,7 @@ MD4C is Markdown parser implementation in C, with the following features:
 
 * **Compliance:** Generally, MD4C aims to be compliant to the latest version of
   [CommonMark specification](http://spec.commonmark.org/). Currently, we are
-  fully compliant to CommonMark 0.30.
+  fully compliant to CommonMark 0.31.
 
 * **Extensions:** MD4C supports some commonly requested and accepted extensions.
   See below.
@@ -210,20 +206,20 @@ details may be somewhat outdated.
 
 ## FAQ
 
-**Q: How does MD4C compare to a parser XY?**
+**Q: How does MD4C compare to other Markdown parsers?**
 
 **A:** Some other implementations combine Markdown parser and HTML generator
 into a single entangled code hidden behind an interface which just allows the
 conversion from Markdown to HTML. They are often unusable if you want to
 process the input in any other way.
 
-Even when the parsing is available as a standalone feature, most parsers (if
-not all of them; at least within the scope of C/C++ language) are full DOM-like
-parsers: They construct abstract syntax tree (AST) representation of the whole
-Markdown document. That takes time and it leads to bigger memory footprint.
+Second, most parsers (if not all of them; at least within the scope of C/C++
+language) are full DOM-like parsers: They construct abstract syntax tree (AST)
+representation of the whole Markdown document. That takes time and it leads to
+bigger memory footprint.
 
-It's completely fine as long as you really need it. If you don't need the full
-AST, there is a very high chance that using MD4C will be substantially faster
+Build AST is completely fine as long as you really need it. If you don't need
+it, there is a very high chance that using MD4C will be substantially faster
 and less hungry in terms of memory consumption.
 
 Last but not least, some Markdown parsers are implemented in a naive way. When
@@ -247,9 +243,8 @@ a valid Markdown document. (In practice, this more or less always means UTF-8
 encoding.)
 
 In other words, according to the specification, it does not matter whether some
-Markdown syntax construction is in some way broken or not. If it is broken, it
-will simply not be recognized and the parser should see it just as a verbatim
-text.
+Markdown syntax construction is in some way broken or not. If it's broken, it
+won't be recognized and the parser should see it just as a verbatim text.
 
 MD4C takes this a step further: It sees any sequence of bytes as a valid input,
 following completely the GIGO philosophy (garbage in, garbage out). I.e. any
@@ -280,6 +275,12 @@ Ports and bindings to other languages:
   Python bindings for MD4C
 
 Software using MD4C:
+
+* [imgui_md](https://github.com/mekhontsev/imgui_md):
+  Markdown renderer for [Dear ImGui](https://github.com/ocornut/imgui)
+
+* [MarkDown Monolith Assembler](https://github.com/1Hyena/mdma):
+  A command line tool for building browser-based books.
 
 * [QOwnNotes](https://www.qownnotes.org/):
   A plain-text file notepad and todo-list manager with markdown support and
