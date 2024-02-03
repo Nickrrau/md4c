@@ -1,0 +1,5 @@
+.{
+  .name = "md4c",
+  .version = "0.5.2",
+  .dependencies = .{},
+}
